@@ -1,1 +1,1 @@
-<body><?php dd($suites) ?></body>
+<body><?php dd($result) ?></body>
