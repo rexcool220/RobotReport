@@ -15,4 +15,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('report','reportController@report');
+Route::get('/uploadFile','reportController@uploadFile');
+
+Route::post('/processFile','reportController@processFile');
+
+Route::get('/report','reportController@showReport');

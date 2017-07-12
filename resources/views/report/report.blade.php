@@ -1,1 +1,1 @@
-<body><?php dd($result) ?></body>
+<body>this is report page</body>

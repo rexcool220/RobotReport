@@ -3,12 +3,39 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Input;
 
 class reportController extends Controller
 {
-    public function report()
+    public function showReport()
     {
-        $xml = simplexml_load_file("/home/rex/Downloads/output.xml");
+        return view('report/report');
+    }
+    public function uploadFile()
+    {
+        return view('uploadFile/uploadFile');
+    }
+    public function processFile(Request $request)
+    {
+        $file = Input::file('uploadFile');
+        $extension = $file->getClientOriginalExtension();
+        $file_name = strval(time()).str_random(5).'.'.$extension;
+
+        $destination_path = public_path().'/upload/';
+
+        if (Input::hasFile('uploadFile')) {
+            $upload_success = $file->move($destination_path, $file_name);
+            reportController::report($destination_path . $file_name);
+            $result = "pass";
+        } else {
+            return view('processFile/result');
+            $result = "false";
+        }
+        return view('processFile/result', compact('result'));
+    }
+    private function report($filename)
+    {
+        $xml = simplexml_load_file($filename);
         $suites = $xml->xpath("/robot/suite");
         $reportSource = $suites[0]['source'];
         $reportId = $suites[0]['id'];
@@ -87,7 +114,5 @@ class reportController extends Controller
                 }
             }
         }
-        $result = $suites;
-        return view('report/report',compact('result'));
     }
 }
