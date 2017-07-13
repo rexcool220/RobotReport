@@ -20,3 +20,9 @@ Route::get('/uploadFile','reportController@uploadFile');
 Route::post('/processFile','reportController@processFile');
 
 Route::get('/report','reportController@showReport');
+
+Route::get('datatables', 'DatatablesController@getIndex')
+    ->name('datatables');
+
+Route::get('datatables.data', 'DatatablesController@anyData')
+    ->name('datatables.data');
