@@ -2,16 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\suite;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Input;
-use App\report;
+use App\suite;
+use App\test;
+use App\kw;
 
 class reportController extends Controller
 {
     public function showReport($reportId)
     {
         $suites = suite::where('reportID', $reportId)->get()->toArray();
+        for($i = 0; $i < count($suites); $i++)
+        {
+            $tests = test::where('suiteId', $suites[$i]['suiteId'])->get()->toArray();
+            $suites[$i]['tests'] = $tests;
+            for($j = 0; $j < count($tests); $j++)
+            {
+                $kws = kw::where('testId', $tests[$j]['testId'])->get()->toArray();
+                $suites[$i]['tests'][$j]['kws'] = $kws;
+            }
+        }
         return view('report/report', compact('suites'));
     }
     public function uploadFile()
