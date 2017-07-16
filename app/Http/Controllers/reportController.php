@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\suite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Input;
+use App\report;
 
 class reportController extends Controller
 {
-    public function showReport()
+    public function showReport($reportId)
     {
-        return view('report/report');
+        $suites = suite::where('reportID', $reportId)->get()->toArray();
+        return view('report/report', compact('suites'));
     }
     public function uploadFile()
     {

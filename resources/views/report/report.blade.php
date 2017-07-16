@@ -1,1 +1,2 @@
-<body>this is report page</body>
+<body><?php dd($suites)?>
+</body>
