@@ -8,23 +8,25 @@ use Illuminate\Support\Facades\Input;
 use App\suite;
 use App\test;
 use App\kw;
+use App\kwDetail;
+use ZipArchive;
 
 class reportController extends Controller
 {
-    public function showReport($reportId)
+    public function showReport($suiteId)
     {
-        $suites = suite::where('reportID', $reportId)->get()->toArray();
-        for($i = 0; $i < count($suites); $i++)
+        $tests = test::where('suiteId', $suiteId)->get()->toArray();
+        for($i = 0; $i < count($tests); $i++)
         {
-            $tests = test::where('suiteId', $suites[$i]['suiteId'])->get()->toArray();
-            $suites[$i]['tests'] = $tests;
-            for($j = 0; $j < count($tests); $j++)
+            $kws = kw::where('testId', $tests[$i]['testId'])->get()->toArray();
+            $tests[$i]['kws'] = $kws;
+            for($j = 0; $j < count($kws); $j++)
             {
-                $kws = kw::where('testId', $tests[$j]['testId'])->get()->toArray();
-                $suites[$i]['tests'][$j]['kws'] = $kws;
+                $kwDetails = kwDetail::where('kwId', $kws[$j]['kwId'])->get()->toArray();
+                $tests[$i]['kws'][$j]['kwDetails'] = $kwDetails;
             }
         }
-        return view('report/report', compact('suites'));
+        return view('report/report', compact('tests'));
     }
     public function uploadFile()
     {
@@ -40,7 +42,17 @@ class reportController extends Controller
 
         if (Input::hasFile('uploadFile')) {
             $upload_success = $file->move($destination_path, $file_name);
-            reportController::report($destination_path . $file_name);
+            $zip = new ZipArchive;
+            $res = $zip->open($destination_path.$file_name);
+            $dir = dirname($zip->getNameIndex(0));
+            if ($res === TRUE) {
+                $zip->extractTo($destination_path);
+                $zip->close();
+            } else {
+                $result = "false";
+            }
+
+            reportController::report($destination_path . $dir . "/output.xml");
             $result = "pass";
         } else {
             return view('processFile/result');
@@ -51,83 +63,96 @@ class reportController extends Controller
     private function report($filename)
     {
         $xml = simplexml_load_file($filename);
+        preg_match('/([^\/]+)\/[^\/]+$/', $filename, $matches);
+        $dir = $matches[1];
         $suites = $xml->xpath("/robot/suite");
-        $reportSource = $suites[0]['source'];
-        $reportId = $suites[0]['id'];
-        $reportName = $suites[0]['name'];
-        $reportStatus = $suites[0]->status['status'];
-        $reportEndTime = $suites[0]->status['endtime'];
-        $reportStartTime = $suites[0]->status['starttime'];
-        \DB::table('report')->insert(
+
+        $suitSource = $suites[0]['source'];
+        $suiteId = $suites[0]['id'];
+        $suiteName = $suites[0]['name'];
+        $suiteStatus = $suites[0]->status['status'];
+        $suiteEndTime = $suites[0]->status['endtime'];
+        $suiteStartTime = $suites[0]->status['starttime'];
+        \DB::table('suite')->insert(
             ['created_at' => \Carbon\Carbon::now(),
                 'updated_at' => \Carbon\Carbon::now(),
-                'source' => $reportSource,
-                'id' => $reportId,
-                'name' => $reportName,
-                'status' => $reportStatus == 'PASS' ? true : false,
-                'endTime' => $reportEndTime,
-                'startTime' => $reportStartTime]
+                'source' => $suitSource,
+                'id' => $suiteId,
+                'name' => $suiteName,
+                'status' => $suiteStatus == 'PASS' ? true : false,
+                'endTime' => $suiteEndTime,
+                'startTime' => $suiteStartTime]
         );
-        $reportLastInsertId = \DB::table('report')->select('reportId')->max('reportId');
-        foreach($suites[0]->suite as $suite)
+        $suiteLastInsertId = \DB::table('suite')->select('suiteId')->max('suiteId');
+        foreach($suites[0]->test as $test)
         {
-            $suitSource = $suite['source'];
-            $suiteId = $suite['id'];
-            $suiteName = $suite['name'];
-            $suiteDoc = $suite->doc;
-            $suiteStatus = $suite->status['status'];
-            $suiteEndTime = $suite->status['endtime'];
-            $suiteStartTime = $suite->status['starttime'];
-            \DB::table('suite')->insert(
+            $testId = $test['id'];
+            $testName = $test['name'];
+            $testStatus = $test->status['status'];
+            $testEndTime = $test->status['endtime'];
+            $testCritical = $test->status['critical'];
+            $testStartTime = $test->status['starttime'];
+            \DB::table('test')->insert(
                 ['created_at' => \Carbon\Carbon::now(),
                     'updated_at' => \Carbon\Carbon::now(),
-                    'reportId' => $reportLastInsertId,
-                    'source' => $suitSource,
-                    'id' => $suiteId,
-                    'name' => $suiteName,
-                    'doc' => $suiteDoc,
-                    'status' => $suiteStatus == 'PASS' ? true : false,
-                    'endTime' => $suiteEndTime,
-                    'startTime' => $suiteStartTime]
+                    'suiteId' => $suiteLastInsertId,
+                    'id' => $testId,
+                    'name' => $testName,
+                    'status' => $testStatus == 'PASS' ? true : false,
+                    'endTime' => $testEndTime,
+                    'critical' => $testCritical == 'yes' ? true : false,
+                    'startTime' => $testStartTime]
             );
-            $suiteLastInsertId = \DB::table('suite')->select('suiteId')->max('suiteId');
-            foreach($suite->test as $test)
+            $testLastInsertId = \DB::table('test')->select('testId')->max('testId');
+            foreach($test->kw as $kw)
             {
-                $testId = $test['id'];
-                $testName = $test['name'];
-                $testStatus = $test->status['status'];
-                $testEndTime = $test->status['endtime'];
-                $testCritical = $test->status['critical'];
-                $testStartTime = $test->status['starttime'];
-                \DB::table('test')->insert(
+                $kwName = $kw['name'];
+                $kwStatus = $kw->status['status'];
+                $kwEndTime = $kw->status['endtime'];
+                $kwStartTime = $kw->status['starttime'];
+                \DB::table('kw')->insert(
                     ['created_at' => \Carbon\Carbon::now(),
                         'updated_at' => \Carbon\Carbon::now(),
-                        'suiteId' => $suiteLastInsertId,
-                        'id' => $testId,
-                        'name' => $testName,
-                        'status' => $testStatus == 'PASS' ? true : false,
-                        'endTime' => $testEndTime,
-                        'critical' => $testCritical == 'yes' ? true : false,
-                        'startTime' => $testStartTime]
+                        'testId' => $testLastInsertId,
+                        'name' => $kwName,
+                        'status' => $kwStatus == 'PASS' ? true : false,
+                        'endTime' => $kwEndTime,
+                        'startTime' => $kwStartTime]
                 );
-                $testLastInsertId = \DB::table('test')->select('testId')->max('testId');
-                foreach($test->kw as $kw)
+                $kwLastInsertId = \DB::table('kw')->select('kwId')->max('kwId');
+                foreach($kw->kw as $kwDetail)
                 {
-                    $kwName = $kw['name'];
-                    $kwStatus = $kw->status['status'];
-                    $kwEndTime = $kw->status['endtime'];
-                    $kwStartTime = $kw->status['starttime'];
-                    \DB::table('kw')->insert(
+                    $kwDetailImage = "";
+                    if($kwDetail['name'] == "Capture Page Screenshot")
+                    {
+                        preg_match('/img src=\"([^\"]+)\"/', $kwDetail->msg, $matches);
+                        $kwDetailImage = "/upload/".$dir."/".$matches[1];
+                    }
+
+                    $kwDetailName = $kwDetail['name'];
+                    $kwDetailLibrary = $kwDetail['library'];
+                    $kwDetailDoc = $kwDetail->doc;
+                    $kwDetailMsg = $kwDetail->msg;
+                    $kwDetailStatus = $kwDetail->status['status'];
+                    $kwDetailEndTime = $kwDetail->status['endtime'];
+                    $kwDetailStartTime = $kwDetail->status['starttime'];
+                    \DB::table('kwDetail')->insert(
                         ['created_at' => \Carbon\Carbon::now(),
                             'updated_at' => \Carbon\Carbon::now(),
-                            'testId' => $testLastInsertId,
-                            'name' => $kwName,
-                            'status' => $kwStatus == 'PASS' ? true : false,
-                            'endTime' => $kwEndTime,
-                            'startTime' => $kwStartTime]
+                            'kwId' => $kwLastInsertId,
+                            'name' => $kwDetailName,
+                            'library' => $kwDetailLibrary,
+                            'doc' => $kwDetailDoc,
+                            'msg' => $kwDetailMsg,
+                            'status' => $kwDetailStatus == 'PASS' ? true : false,
+                            'endTime' => $kwDetailEndTime,
+                            'startTime' => $kwDetailStartTime,
+                            'image' => $kwDetailImage]
                     );
                 }
             }
+
+
         }
     }
 }

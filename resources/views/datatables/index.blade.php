@@ -22,7 +22,7 @@
 <table class="table table-borderless" id="table">
     <thead>
     <tr>
-        <th class="text-center">reportId</th>
+        <th class="text-center">suiteId</th>
         <th class="text-center">source</th>
         <th class="text-center">id</th>
         <th class="text-center">name</th>
@@ -33,8 +33,8 @@
     </tr>
     </thead>
     @foreach($data as $item)
-        <tr class="item{{$item->reportId}}">
-            <td>{{$item->reportId}}</td>
+        <tr class="item{{$item->suiteId}}">
+            <td>{{$item->suiteId}}</td>
             <td>{{$item->source}}</td>
             <td>{{$item->id}}</td>
             <td>{{$item->name}}</td>
@@ -42,7 +42,7 @@
             <td>{{$item->endTime}}</td>
             <td>{{$item->startTime}}</td>
             <td><button class="edit-modal btn btn-info"
-                        data-info="{{$item->reportId}}">
+                        data-info="{{$item->suiteId}}">
                     <span class="glyphicon glyphicon-share-alt"></span> Detail
                 </button>
         </tr>
