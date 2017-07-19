@@ -65,8 +65,11 @@ class reportController extends Controller
         $xml = simplexml_load_file($filename);
         preg_match('/([^\/]+)\/[^\/]+$/', $filename, $matches);
         $dir = $matches[1];
-        $suites = $xml->xpath("/robot/suite");
 
+        $statistic = $xml->xpath("/robot/statistics");
+
+
+        $suites = $xml->xpath("/robot/suite");
         $suitSource = $suites[0]['source'];
         $suiteId = $suites[0]['id'];
         $suiteName = $suites[0]['name'];

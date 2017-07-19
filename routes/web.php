@@ -23,3 +23,7 @@ Route::get('/report/{reportId}','reportController@showReport');
 
 Route::get('datatables', 'DatatablesController@getIndex')
     ->name('datatables');
+
+Route::get('/test', function () {
+    return view('test.index');
+});
