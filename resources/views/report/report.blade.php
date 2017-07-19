@@ -11,7 +11,7 @@
     <script src="{{ URL::to('js/jquery.aCollapTable.js') }}"></script>
     <script>
         $(document).ready(function () {
-            $('#robotReport').aCollapTable({
+            $('#testReport').aCollapTable({
                 startCollapsed: true,
                 addColumn: false,
                 plusButton: '<i class="glyphicon glyphicon-plus"></i> ',
@@ -34,7 +34,7 @@
     </style>
 </head>
 <body>
-<table class="collaptable table-bordered table-hover" id="robotReport">
+<table class="collaptable table-bordered table-hover" id="testReport">
     <tr>
         <th>name</th>
         <th>value</th>
@@ -61,17 +61,9 @@
             <td>test startTime</td>
             <td>{{$test['startTime']}}</td>
         </tr>
-        <tr data-parent={{"test".$test['testId']}}>
-            <td></td>
-            <td>
-                <table class="collaptable table-bordered table-hover" id="robotReport">
-                <tr>
-                    <th>name</th>
-                    <th>value</th>
-                </tr>
                 <?php foreach($test['kws'] as $kw)
                 { ?>
-                <tr data-id={{"kw".$kw['kwId']}} data-parent="">
+                <tr data-id={{"kw".$kw['kwId']}} data-parent={{"test".$test['testId']}}>
                     <td>key word name</td>
                     <td>{{$kw['name']}}</td>
                 </tr>
@@ -87,17 +79,9 @@
                     <td>key word startTime</td>
                     <td>{{$kw['startTime']}}</td>
                 </tr>
-                <tr data-parent={{"kw".$kw['kwId']}}>
-                    <td></td>
-                    <td>
-                        <table class="collaptable table-bordered table-hover" id="robotReport">
-                        <tr>
-                            <th>name</th>
-                            <th>value</th>
-                        </tr>
                         <?php foreach($kw['kwDetails'] as $kwDetail)
                         { ?>
-                        <tr data-id={{"kwDetail".$kwDetail['kwDetailId']}} data-parent="">
+                        <tr data-id={{"kwDetail".$kwDetail['kwDetailId']}} data-parent={{"kw".$kw['kwId']}}>
                             <td>key word detail name</td>
                             <td>{{$kwDetail['name']}}</td>
                         </tr>
@@ -130,16 +114,7 @@
                             <td><img src="{{$kwDetail['image']}}" width=800></img></td>
                         </tr>
                         <?php } ?>
-                        </table>
-                    </td>
-                </tr>
                 <?php } ?>
-                </table>
-            </td>
-            <td></td>
-            <td></td>
-        </tr>
-
         <?php } ?>
 </table>
 </body>
