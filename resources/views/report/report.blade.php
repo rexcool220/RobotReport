@@ -24,16 +24,34 @@
 
         google.charts.setOnLoadCallback(drawAllTestChart);
 
-        google.charts.setOnLoadCallback(drawCriticalTestChart);
+        google.charts.setOnLoadCallback(drawFailRate);
+        drawFailRate
 
         function drawAllTestChart() {
             var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Topping');
-            data.addColumn('number', 'Slices');
-            data.addRows([
-                ['All Test Pass', {{$suite[0]['allTestsPass']}}],
-                ['All Test Fail', {{$suite[0]['allTestsFail']}}]
-            ]);
+            data.addColumn('string', 'name');
+            data.addColumn('number', 'number');
+            <?php
+            $array = array();
+            foreach ($tests as $test) {
+                foreach ($test['kws'] as $kw) {
+                    foreach ($kw['kwDetails'] as $kwDetail) {
+                        if (array_key_exists($kwDetail['name'], $array) == true) {
+                            $array[$kwDetail['name']]++;
+                        } else {
+                            $array[$kwDetail['name']] = 1;
+                        }
+                    }
+                }
+            }
+            $command = "data.addRows([";
+            foreach ($array as $key => $value) {
+                $command = $command . "['" . $key . "', " . $value . "],";
+            }
+            substr($command, 0, -1);
+            $command = $command . "]);";
+            echo $command;
+            ?>
 
             var options = {
                 title: 'All Test Result',
@@ -45,32 +63,49 @@
             chart.draw(data, options);
         }
 
-        function drawCriticalTestChart() {
+        function drawFailRate() {
             var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Topping');
-            data.addColumn('number', 'Slices');
-            //                foreach($tests as $test)
-//                {
-//                    foreach($test['kws'] as $kw)
-//                    {
-//                        foreach($kw['kwDetails'] as $kwDetail)
-//                        {
-//                            array_push($nameArray, $kwDetail['name']);
-//                        }
-//                    }
-//                }
-            data.addRows([
-                ['Critical Test Pass', {{$suite[0]['criticalTestsPass']}}],
-                ['Critical Test Fail', {{$suite[0]['criticalTestsFail']}}]
-            ]);
+            data.addColumn('string', 'name');
+            data.addColumn('number', 'number');
+                <?php
+                $array = array();
+                foreach ($tests as $test) {
+                    foreach ($test['kws'] as $kw) {
+                        foreach ($kw['kwDetails'] as $kwDetail) {
+                            if ($kwDetail['status'] == 1) {
+                                if (array_key_exists('pass', $array) == true) {
+                                    $array['pass']++;
+                                } else {
+                                    $array['pass'] = 1;
+                                }
+                            } else {
+                                if (array_key_exists($kwDetail['name'], $array) == true) {
+                                    $array[$kwDetail['name']]++;
+                                } else {
+                                    $array[$kwDetail['name']] = 1;
+                                }
+                            }
+
+                        }
+                    }
+                }
+                $command = "data.addRows([";
+                foreach ($array as $key => $value) {
+                    $command = $command . "['" . $key . "', " . $value . "],";
+                }
+                substr($command, 0, -1);
+                $command = $command . "]);";
+                echo $command;
+                ?>
 
             var options = {
-                title: 'Critical Test Result',
-                width: 400,
-                height: 300
-            };
+                    title: 'Fail Rate',
+                    pieHole: 0.4,
+                    width: 400,
+                    height: 300
+                };
 
-            var chart = new google.visualization.PieChart(document.getElementById('Critical_Test_div'));
+            var chart = new google.visualization.PieChart(document.getElementById('Fail_Rate_div'));
             chart.draw(data, options);
         }
     </script>
@@ -107,7 +142,7 @@
             </table>
         </div>
         <div class="col-sm-3" id="All_Test_div"></div>
-        <div class="col-sm-3" id="Critical_Test_div"></div>
+        <div class="col-sm-3" id="Fail_Rate_div"></div>
         <div class="col-sm-1"></div>
     </div>
     <div class="row">
@@ -226,4 +261,3 @@
 </body>
 </html>
 <body>
-<?php dd($tests) ?>
