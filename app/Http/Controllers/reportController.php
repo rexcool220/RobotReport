@@ -15,6 +15,23 @@ class reportController extends Controller
 {
     public function showReport($suiteId)
     {
+        $suite = suite::where('suiteId', $suiteId)->get()->toArray();
+        $criticalTestsResult = array(
+            array('Result', 'Rating'),
+            array('criticalTestsFail',$suite[0]['criticalTestsFail']),
+            array(' criticalTestsPass',$suite[0]['criticalTestsPass'])
+        );
+
+        $encodedCriticalTestsResulta = json_encode($criticalTestsResult);
+
+        $allTestsResult = array(
+            array('Result', 'Rating'),
+            array('allTestsFail',$suite[0]['allTestsFail']),
+            array(' allTestsPass',$suite[0]['allTestsPass'])
+        );
+
+        $allTestsResult = json_encode($allTestsResult);
+
         $tests = test::where('suiteId', $suiteId)->get()->toArray();
         for($i = 0; $i < count($tests); $i++)
         {
@@ -26,7 +43,7 @@ class reportController extends Controller
                 $tests[$i]['kws'][$j]['kwDetails'] = $kwDetails;
             }
         }
-        return view('report/report', compact('tests'));
+        return view('report/report', compact('tests', 'suite', 'encodedCriticalTestsResulta', 'allTestsResult'));
     }
     public function uploadFile()
     {
@@ -67,7 +84,11 @@ class reportController extends Controller
         $dir = $matches[1];
 
         $statistic = $xml->xpath("/robot/statistics");
-
+        $criticalTestsFail = $statistic[0]->total[0]->stat[0]['fail'];
+        $criticalTestsPass = $statistic[0]->total[0]->stat[0]['pass'];
+        $allTestsFail = $statistic[0]->total[0]->stat[1]['fail'];
+        $allTestsPass = $statistic[0]->total[0]->stat[1]['pass'];
+        $error = $xml->xpath("/robot/errors");
 
         $suites = $xml->xpath("/robot/suite");
         $suitSource = $suites[0]['source'];
@@ -84,7 +105,13 @@ class reportController extends Controller
                 'name' => $suiteName,
                 'status' => $suiteStatus == 'PASS' ? true : false,
                 'endTime' => $suiteEndTime,
-                'startTime' => $suiteStartTime]
+                'startTime' => $suiteStartTime,
+                'criticalTestsFail' => $criticalTestsFail,
+                'criticalTestsPass' => $criticalTestsPass,
+                'allTestsFail' => $allTestsFail,
+                'allTestsPass' => $allTestsPass,
+                'error' => $error[0]]
+
         );
         $suiteLastInsertId = \DB::table('suite')->select('suiteId')->max('suiteId');
         foreach($suites[0]->test as $test)
