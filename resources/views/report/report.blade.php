@@ -31,33 +31,33 @@
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'name');
             data.addColumn('number', 'number');
-            <?php
-            $array = array();
-            foreach ($tests as $test) {
-                foreach ($test['kws'] as $kw) {
-                    foreach ($kw['kwDetails'] as $kwDetail) {
-                        if (array_key_exists($kwDetail['name'], $array) == true) {
-                            $array[$kwDetail['name']]++;
-                        } else {
-                            $array[$kwDetail['name']] = 1;
+                <?php
+                $array = array();
+                foreach ($tests as $test) {
+                    foreach ($test['kws'] as $kw) {
+                        foreach ($kw['kwDetails'] as $kwDetail) {
+                            if (array_key_exists($kwDetail['name'], $array) == true) {
+                                $array[$kwDetail['name']]++;
+                            } else {
+                                $array[$kwDetail['name']] = 1;
+                            }
                         }
                     }
                 }
-            }
-            $command = "data.addRows([";
-            foreach ($array as $key => $value) {
-                $command = $command . "['" . $key . "', " . $value . "],";
-            }
-            substr($command, 0, -1);
-            $command = $command . "]);";
-            echo $command;
-            ?>
+                $command = "data.addRows([";
+                foreach ($array as $key => $value) {
+                    $command = $command . "['" . $key . "', " . $value . "],";
+                }
+                substr($command, 0, -1);
+                $command = $command . "]);";
+                echo $command;
+                ?>
 
             var options = {
-                title: 'All Test Result',
-                width: 400,
-                height: 300
-            };
+                    title: 'All Test Result',
+                    width: 400,
+                    height: 300
+                };
 
             var chart = new google.visualization.PieChart(document.getElementById('All_Test_div'));
             chart.draw(data, options);
@@ -132,7 +132,14 @@
                 </tr>
                 <tr>
                     <td>Elapsed Time</td>
-                    <td>00:00:38.920</td>
+                    <td>
+                        <?php
+                        $datetime1 = DateTime::createFromFormat('Ymd H:i:s.u', $suite[0]['startTime']);
+                        $datetime2 = DateTime::createFromFormat('Ymd H:i:s.u', $suite[0]['endTime']);
+                        $diffInSeconds = $datetime2->getTimestamp() - $datetime1->getTimestamp();
+                        echo $diffInSeconds;
+                        ?>
+                    </td>
                 </tr>
                 <tr>
                     <td>Error</td>
@@ -261,3 +268,6 @@
 </body>
 </html>
 <body>
+<?php
+dd($diffInSeconds);
+?>
